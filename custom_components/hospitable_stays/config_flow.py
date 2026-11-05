@@ -12,12 +12,14 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import dt as dt_util
 
 from .api import ApiError, AuthenticationError, HospitableApi
+from .cloud_helpers import cloud_active
 from .const import (
     CONF_ARRIVAL_HOURS,
     CONF_GUEST_DETAILS,
@@ -194,7 +196,7 @@ class HospitableOptionsFlow(OptionsFlowWithReload):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["settings"]
+            step_id="init", menu_options=["settings", "webhooks"]
         )
 
     async def async_step_settings(
@@ -225,3 +227,137 @@ class HospitableOptionsFlow(OptionsFlowWithReload):
             ),
         )
 
+    async def async_step_webhooks(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show Cloud subscription gating before offering any setup steps."""
+        from .const import CONF_WEBHOOK_ID
+
+        if not cloud_active(self.hass):
+            return self.async_show_form(
+                step_id="cloud_required",
+                data_schema=vol.Schema({}),
+                description_placeholders={
+                    "minutes": str(
+                        self.config_entry.options.get(
+                            CONF_POLL_MINUTES, DEFAULT_POLL_MINUTES
+                        )
+                    )
+                },
+            )
+        if self.config_entry.data.get(CONF_WEBHOOK_ID):
+            return self.async_show_menu(
+                step_id="webhooks",
+                menu_options=["webhook_status", "test_event", "disable_push"],
+            )
+        return self.async_show_menu(step_id="webhooks", menu_options=["enable_push"])
+
+    async def async_step_cloud_required(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_create_entry(title="", data=dict(self.config_entry.options))
+
+    async def async_step_enable_push(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors = {}
+        if not cloud_active(self.hass):
+            return await self.async_step_webhooks()
+        if user_input is not None:
+            email = user_input["primary_email"].strip()
+            if "@" not in email or len(email) > 254:
+                errors["base"] = "invalid_email"
+            else:
+                try:
+                    await self.config_entry.runtime_data.webhooks.async_enable(email)
+                except HomeAssistantError:
+                    errors["base"] = "cloud_unavailable"
+                else:
+                    return await self.async_step_webhook_status()
+        return self.async_show_form(
+            step_id="enable_push",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(vol.Secret("primary_email")): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.EMAIL
+                        )
+                    )
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_webhook_status(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        from .const import CONF_CLOUDHOOK_URL
+
+        if user_input is not None:
+            return self.async_create_entry(
+                title="", data=dict(self.config_entry.options)
+            )
+        manager = self.config_entry.runtime_data.webhooks
+        poll = manager.coordinator.last_successful_poll
+        received = manager.last_received
+        return self.async_show_form(
+            step_id="webhook_status",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        "cloudhook_url",
+                        default=self.config_entry.data.get(CONF_CLOUDHOOK_URL, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.URL, read_only=True
+                        )
+                    )
+                }
+            ),
+            description_placeholders={
+                "received": received.isoformat() if received else "Never",
+                "event": manager.last_event or "None",
+                "fallback": "Active"
+                if manager.fallback_active
+                else "Standby (periodic polling continues)",
+                "poll": poll.isoformat() if poll else "Never",
+            },
+        )
+
+    async def async_step_test_event(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            success = await self.config_entry.runtime_data.webhooks.async_test()
+            return self.async_show_form(
+                step_id="test_result",
+                data_schema=vol.Schema({}),
+                description_placeholders={
+                    "result": "Signed sample processed successfully"
+                    if success
+                    else "Test failed; check Cloud connection and webhook configuration"
+                },
+            )
+        return self.async_show_form(step_id="test_event", data_schema=vol.Schema({}))
+
+    async def async_step_test_result(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_create_entry(title="", data=dict(self.config_entry.options))
+
+    async def async_step_disable_push(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors = {}
+        if user_input is not None:
+            try:
+                await self.config_entry.runtime_data.webhooks.async_disable()
+            except HomeAssistantError:
+                errors["base"] = "cloud_unavailable"
+            else:
+                return self.async_create_entry(
+                    title="", data=dict(self.config_entry.options)
+                )
+        return self.async_show_form(
+            step_id="disable_push", data_schema=vol.Schema({}), errors=errors
+        )

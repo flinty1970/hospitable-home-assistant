@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from .api import HospitableApi
 from .coordinator import HospitableCoordinator
+from .webhook import WebhookManager
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.CALENDAR]
 
@@ -21,6 +22,7 @@ class RuntimeData:
     """Runtime resources belonging to one entry."""
 
     coordinator: HospitableCoordinator
+    webhooks: WebhookManager
 
 
 type HospitableEntry = ConfigEntry[RuntimeData]
@@ -36,7 +38,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool
         HospitableApi(async_get_clientsession(hass), entry.data[CONF_ACCESS_TOKEN]),
     )
     await coordinator.async_config_entry_first_refresh()
-    entry.runtime_data = RuntimeData(coordinator)
+    manager = WebhookManager(hass, entry, coordinator)
+    await manager.async_setup()
+    entry.runtime_data = RuntimeData(coordinator, manager)
+    entry.async_on_unload(manager.unload)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(
         async_track_time_interval(hass, coordinator.tick, timedelta(seconds=30))
@@ -52,3 +57,17 @@ async def _async_options_updated(hass: HomeAssistant, entry: HospitableEntry) ->
 async def async_unload_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool:
     """Unload entity platforms and registered listeners."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: HospitableEntry) -> None:
+    """Clean up the cloud hook when the configuration is removed."""
+    from homeassistant.helpers.storage import Store
+
+    from .cloud_helpers import delete_hook
+    from .const import CONF_WEBHOOK_ID, DOMAIN
+
+    if hook_id := entry.data.get(CONF_WEBHOOK_ID):
+        await delete_hook(hass, hook_id)
+    await Store(
+        hass, 1, f"{DOMAIN}.{entry.entry_id}.webhooks", private=True
+    ).async_remove()

@@ -47,7 +47,8 @@
     "step": {
       "init": {
         "menu_options": {
-          "settings": "Timing and privacy"
+          "settings": "Timing and privacy",
+          "webhooks": "Webhooks"
         }
       },
       "settings": {
@@ -58,7 +59,50 @@
           "arrival_hours": "Arrival threshold (hours)",
           "guest_details": "Expose guest names and contact details"
         }
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "menu_options": {
+          "enable_push": "Enable push updates",
+          "webhook_status": "Webhook status and URL",
+          "test_event": "Send test event",
+          "disable_push": "Disable push updates"
+        }
+      },
+      "cloud_required": {
+        "title": "Polling mode",
+        "description": "Push updates need Home Assistant Cloud (Nabu Casa). The integration is working in polling mode, with updates every {minutes} minutes."
+      },
+      "enable_push": {
+        "title": "Enable push updates",
+        "description": "Enter the primary Hospitable account email. Hospitable derives host signing secrets from this email encoded in base64. This is not a strong random signing secret; protect the hook URL too. Anyone with the URL can post to it, which is why signature verification matters.",
+        "data": {
+          "primary_email": "Primary Hospitable account email"
+        }
+      },
+      "webhook_status": {
+        "title": "Webhook status",
+        "description": "Last webhook received (UTC): {received}\nEvent: {event}\nPolling fallback: {fallback}\nLast successful poll (UTC): {poll}\n\n1. Copy the URL below.\n2. In Hospitable open Apps \u2192 Webhooks under Tools \u2192 Webhooks tab \u2192 + Add new.\n3. Give it a name, paste the URL, select Reservations, and Save.\n4. Click Test in Hospitable, then reopen this status screen.\n\nAnyone with the URL can post to it, which is why signature verification matters. Keep the URL private. Only Home Assistant Cloud delivery is accepted.",
+        "data": {
+          "cloudhook_url": "Private Nabu Casa webhook URL"
+        }
+      },
+      "test_event": {
+        "title": "Send test event",
+        "description": "Submit to send a signed synthetic event through the local registered receiver. This checks signatures and processing. It does not test cloud routing or Hospitable registration."
+      },
+      "test_result": {
+        "title": "Local test result",
+        "description": "{result}"
+      },
+      "disable_push": {
+        "title": "Disable push updates",
+        "description": "Delete the Nabu Casa hook and continue polling. Remove the corresponding webhook in Hospitable as well."
       }
+    },
+    "error": {
+      "cloud_unavailable": "Home Assistant Cloud is unavailable. Check its subscription and connection, then retry.",
+      "invalid_email": "Enter the primary account email address."
     }
   },
   "entity": {
