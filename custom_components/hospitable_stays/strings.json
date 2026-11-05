@@ -1,0 +1,106 @@
+{
+  "title": "Hospitable Stays",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Hospitable",
+        "description": "Enter a Read-only Personal Access Token from Hospitable \u2192 Apps \u2192 API access. Your token stays on this Home Assistant instance.",
+        "data": {
+          "access_token": "Personal Access Token"
+        }
+      },
+      "properties": {
+        "title": "Select properties",
+        "data": {
+          "properties": "Properties"
+        }
+      },
+      "timezone": {
+        "title": "Confirm property timezone",
+        "description": "Property: {property}. API reports {reported_timezone}. Select this property's IANA timezone; the suggested Home Assistant timezone may differ.",
+        "data": {
+          "timezone": "Property timezone"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Renew Hospitable token",
+        "description": "Create a new Read-only PAT for the same account.",
+        "data": {
+          "access_token": "Personal Access Token"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Token invalid, expired, or missing Read permission.",
+      "cannot_connect": "Unable to connect. Check connectivity and retry after any API rate limit.",
+      "select_properties": "Select at least one available property.",
+      "invalid_timezone": "Choose a valid IANA timezone.",
+      "wrong_account": "This token cannot read all configured properties."
+    },
+    "abort": {
+      "no_properties": "No properties are available to this token.",
+      "already_configured": "These properties are already configured.",
+      "reauth_successful": "Token renewed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "menu_options": {
+          "settings": "Timing and privacy"
+        }
+      },
+      "settings": {
+        "title": "Timing and privacy",
+        "description": "Guest details are off by default. Enabling them exposes guest names and contacts in state attributes and Recorder history. Disabling stops future exposure; existing history remains until purged.",
+        "data": {
+          "poll_minutes": "Polling interval (minutes)",
+          "arrival_hours": "Arrival threshold (hours)",
+          "guest_details": "Expose guest names and contact details"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "reservation_status": {
+        "name": "Reservation status",
+        "state": {
+          "none": "None",
+          "checked_in": "Checked in",
+          "upcoming": "Upcoming"
+        }
+      },
+      "next_reservation": {
+        "name": "Next reservation"
+      }
+    },
+    "binary_sensor": {
+      "occupied": {
+        "name": "Occupied"
+      },
+      "arrival": {
+        "name": "Arrival within threshold"
+      }
+    },
+    "calendar": {
+      "reservations": {
+        "name": "Reservations"
+      }
+    }
+  },
+  "issues": {
+    "invalid_auth": {
+      "title": "Hospitable token needs renewal",
+      "description": "The token is invalid, expired, or missing Read permission. Continue to start reauthentication.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Renew token",
+            "description": "Continue to start the integration's reauthentication flow."
+          }
+        }
+      }
+    }
+  }
+}
