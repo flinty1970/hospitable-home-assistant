@@ -18,8 +18,8 @@ The integration source uses Python 3.12-compatible syntax; current HA runs Pytho
 2. Add `https://github.com/flinty1970/hospitable-home-assistant`, category **Integration**.
 3. Find **Hospitable Stays**, download the release, and restart Home Assistant.
 4. Settings → Devices & services → Add integration → **Hospitable Stays**.
-5. Enter a read-only PAT, select one or more properties and confirm each property's
-   **IANA timezone** (for example `America/New_York`). This is the property's
+5. Enter a read-only PAT, select one or more properties and choose each property's
+   **IANA timezone** from the searchable menu (for example `America/New_York`). This is the property's
    timezone, which can differ from Home Assistant's or your browser's.
 
 The repository must be published before HACS can download it. It is a custom
@@ -173,9 +173,9 @@ IDs and the fake property ID before creating them in HA's automation UI.
   empty property. Retry after the backoff interval; don't repeatedly reload.
 - **No upcoming bookings:** check confirmed status, property selection and the
   calendar window. Owner stays and iCal calendar blocks are not guest reservations.
-- **Wrong times:** confirm property timezone and inspect Booking.com values. To
-  change selected properties/zones in this initial version, remove and re-add the
-  config entry; entity unique IDs remain based on property IDs.
+- **Wrong times:** confirm property timezone and inspect Booking.com values. Use Configure → Property timezones to correct a zone without re-entering
+  your PAT. A UK property uses Europe/London even on a US Home Assistant instance.
+  Changing selected properties still requires removing and re-adding the entry.
 - **No push:** ensure Cloud is active/connected, email matches the primary account,
   and the exact private URL and Reservations subscription are saved in Hospitable.
   The local test alone cannot validate that setup. Polling continues.

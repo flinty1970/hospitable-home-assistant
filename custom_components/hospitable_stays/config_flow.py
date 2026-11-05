@@ -1,7 +1,7 @@
 """UI setup, reauthentication and options."""
 
 from typing import Any
-from zoneinfo import ZoneInfoNotFoundError
+from zoneinfo import ZoneInfoNotFoundError, available_timezones
 
 import probatio as vol
 from homeassistant.config_entries import (
@@ -11,7 +11,7 @@ from homeassistant.config_entries import (
     OptionsFlowWithReload,
 )
 from homeassistant.const import CONF_ACCESS_TOKEN
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers import selector
@@ -37,6 +37,37 @@ TOKEN_SCHEMA = vol.Schema(
         )
     }
 )
+
+
+async def timezone_schema(
+    hass: HomeAssistant, default: str | None = None
+) -> vol.Schema:
+    """Offer a searchable IANA menu; a numeric offset must not suggest HA's zone."""
+    zones = sorted(await hass.async_add_executor_job(available_timezones))
+    key = (
+        vol.Required("timezone", default=default)
+        if default in zones
+        else vol.Required("timezone")
+    )
+    return vol.Schema(
+        {
+            key: selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(
+                            value=zone,
+                            label="Europe/London (United Kingdom)"
+                            if zone == "Europe/London"
+                            else zone,
+                        )
+                        for zone in zones
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                    custom_value=False,
+                )
+            )
+        }
+    )
 
 
 class HospitableConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -136,17 +167,9 @@ class HospitableConfigFlow(ConfigFlow, domain=DOMAIN):
                         },
                     )
                 return await self.async_step_timezone()
-        try:
-            if await dt_util.async_get_time_zone(prop["timezone"]) is None:
-                raise ValueError("Invalid IANA timezone")
-            default = prop["timezone"]
-        except (ZoneInfoNotFoundError, ValueError):
-            default = self.hass.config.time_zone
         return self.async_show_form(
             step_id="timezone",
-            data_schema=vol.Schema(
-                {vol.Required("timezone", default=default): selector.TextSelector()}
-            ),
+            data_schema=await timezone_schema(self.hass, prop["timezone"]),
             errors=errors,
             description_placeholders={
                 "property": prop["name"],
@@ -196,7 +219,43 @@ class HospitableOptionsFlow(OptionsFlowWithReload):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["settings", "webhooks"]
+            step_id="init", menu_options=["settings", "timezones", "webhooks"]
+        )
+
+    async def async_step_timezones(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Correct property zones without removing entries or re-entering a PAT."""
+        if not hasattr(self, "_timezone_index"):
+            self._timezone_index = 0
+            self._timezones: dict[str, str] = dict(
+                self.config_entry.options.get("timezones", {})
+            )
+        prop = self.config_entry.data[CONF_PROPERTIES][self._timezone_index]
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            zone = user_input["timezone"]
+            if zone not in await self.hass.async_add_executor_job(available_timezones):
+                errors["base"] = "invalid_timezone"
+            else:
+                self._timezones[prop["id"]] = zone
+                self._timezone_index += 1
+                if self._timezone_index == len(self.config_entry.data[CONF_PROPERTIES]):
+                    return self.async_create_entry(
+                        title="",
+                        data={
+                            **self.config_entry.options,
+                            "timezones": self._timezones,
+                        },
+                    )
+                return await self.async_step_timezones()
+        return self.async_show_form(
+            step_id="timezones",
+            data_schema=await timezone_schema(
+                self.hass, self._timezones.get(prop["id"], prop["timezone"])
+            ),
+            errors=errors,
+            description_placeholders={"property": prop["name"]},
         )
 
     async def async_step_settings(

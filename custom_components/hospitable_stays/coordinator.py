@@ -43,7 +43,17 @@ class HospitableCoordinator(DataUpdateCoordinator[dict[str, list[Reservation]]])
         )
         self.entry = entry
         self.api = api
-        self.properties = {p["id"]: Property(**p) for p in entry.data[CONF_PROPERTIES]}
+        self.properties = {
+            p["id"]: Property(
+                **{
+                    **p,
+                    "timezone": entry.options.get("timezones", {}).get(
+                        p["id"], p["timezone"]
+                    ),
+                }
+            )
+            for p in entry.data[CONF_PROPERTIES]
+        }
         self.include_guest: bool = entry.options.get(CONF_GUEST_DETAILS, False)
         self.arrival_hours: int = entry.options.get(
             CONF_ARRIVAL_HOURS, DEFAULT_ARRIVAL_HOURS

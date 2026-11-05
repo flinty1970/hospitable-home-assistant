@@ -17,7 +17,7 @@
       },
       "timezone": {
         "title": "Confirm property timezone",
-        "description": "Property: {property}. API reports {reported_timezone}. Select this property's IANA timezone; the suggested Home Assistant timezone may differ.",
+        "description": "Property: {property}. API reports {reported_timezone}. Choose the property's region/city timezone from the searchable menu. A numeric offset cannot identify daylight-saving rules. For a UK property choose Europe/London (United Kingdom), regardless of where Home Assistant runs.",
         "data": {
           "timezone": "Property timezone"
         }
@@ -48,7 +48,8 @@
       "init": {
         "menu_options": {
           "settings": "Timing and privacy",
-          "webhooks": "Webhooks"
+          "webhooks": "Webhooks",
+          "timezones": "Property timezones"
         }
       },
       "settings": {
@@ -98,11 +99,19 @@
       "disable_push": {
         "title": "Disable push updates",
         "description": "Delete the Nabu Casa hook and continue polling. Remove the corresponding webhook in Hospitable as well."
+      },
+      "timezones": {
+        "title": "Property timezone",
+        "description": "Property: {property}. Choose this property's region/city from the searchable menu. For a UK property choose Europe/London (United Kingdom). This does not change Home Assistant's timezone.",
+        "data": {
+          "timezone": "Property timezone"
+        }
       }
     },
     "error": {
       "cloud_unavailable": "Home Assistant Cloud is unavailable. Check its subscription and connection, then retry.",
-      "invalid_email": "Enter the primary account email address."
+      "invalid_email": "Enter the primary account email address.",
+      "invalid_timezone": "Choose a timezone from the menu."
     }
   },
   "entity": {

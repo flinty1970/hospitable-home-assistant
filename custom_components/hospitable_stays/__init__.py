@@ -32,7 +32,9 @@ type HospitableEntry = ConfigEntry[RuntimeData]
 async def async_setup_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool:
     """Set up UI-selected properties and platforms."""
     for prop in entry.data["properties"]:
-        await dt_util.async_get_time_zone(prop["timezone"])
+        await dt_util.async_get_time_zone(
+            entry.options.get("timezones", {}).get(prop["id"], prop["timezone"])
+        )
     coordinator = HospitableCoordinator(
         hass,
         entry,

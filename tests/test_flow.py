@@ -63,3 +63,46 @@ async def test_options(hass, entry):
     )
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert entry.options["poll_minutes"] == 15
+
+
+async def test_offset_timezone_requires_explicit_menu_choice(hass, property_data):
+    import probatio
+    import pytest
+
+    property_data["timezone"] = "+0000"
+    with patch(
+        "custom_components.hospitable_stays.api.HospitableApi.properties",
+        return_value=[property_data],
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_USER},
+            data={"access_token": "FAKE-TEST-TOKEN"},
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"properties": [property_data["id"]]}
+        )
+        schema = result["data_schema"]
+        with pytest.raises(probatio.Invalid):
+            schema({})
+        with pytest.raises(probatio.Invalid):
+            schema({"timezone": "not-a-timezone"})
+        assert schema({"timezone": "Europe/London"})["timezone"] == "Europe/London"
+        dropdown = next(iter(schema.schema.values()))
+        assert dropdown.config["mode"] == "dropdown"
+        assert not dropdown.config["custom_value"]
+
+
+async def test_change_timezone_without_reauth(hass, entry):
+    entry.add_to_hass(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "timezones"}
+    )
+    assert result["step_id"] == "timezones"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"timezone": "Europe/London"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert entry.options["timezones"] == {"fake-property": "Europe/London"}
+    assert entry.data["access_token"] == "FAKE-TEST-TOKEN-NOT-A-CREDENTIAL"

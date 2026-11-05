@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Searchable timezone menus in setup and options.
+- Require an explicit timezone choice when the API supplies only a numeric offset.
+- Correct property timezones in options without re-entering the PAT.
+
 ## 0.1.0
 
 - Multi-property read-only PAT setup, property timezone confirmation and reauth.

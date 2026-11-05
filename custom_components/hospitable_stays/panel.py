@@ -94,7 +94,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         webcomponent_name="hospitable-stays-panel",
         sidebar_title="Hospitable Stays",
         sidebar_icon="mdi:calendar-home",
-        module_url=f"/api/{DOMAIN}/panel.js?v=0.1.0",
+        module_url=f"/api/{DOMAIN}/panel.js?v=0.1.1",
         require_admin=True,
     )
     data["panel_registered"] = True

@@ -101,3 +101,21 @@ async def test_entities_and_calendar(hass, entry, property_data, reservation_dat
         )
         c.last_update_success = False
         assert not status.available
+
+
+async def test_property_zone_override_normalizes_booking_offset(
+    hass, entry, reservation_data
+):
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        entry, options={"timezones": {"fake-property": "Europe/London"}}
+    )
+    reservation_data["platform"] = "booking"
+    api = AsyncMock()
+    api.reservations.return_value = [reservation_data]
+    c = HospitableCoordinator(hass, entry, api)
+    result = await c._async_update_data()
+    stay = result["fake-property"][0]
+    assert c.properties["fake-property"].timezone == "Europe/London"
+    assert stay.check_in.hour == 15
+    assert stay.check_in.utcoffset().total_seconds() == 0
