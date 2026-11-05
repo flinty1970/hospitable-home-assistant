@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Fix saving options on loaded entries by using only OptionsFlowWithReload.
+- Add full integration lifecycle tests for saved timezone and privacy options.
+
 ## 0.1.1
 
 - Searchable timezone menus in setup and options.

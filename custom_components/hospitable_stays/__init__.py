@@ -50,12 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool
     entry.async_on_unload(
         async_track_time_interval(hass, coordinator.tick, timedelta(seconds=30))
     )
-    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
-
-
-async def _async_options_updated(hass: HomeAssistant, entry: HospitableEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool:

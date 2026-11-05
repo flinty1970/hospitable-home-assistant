@@ -91,3 +91,51 @@ async def test_cloud_required_options(hass, entry):
     assert result["step_id"] == "cloud_required"
     assert result["description_placeholders"]["minutes"] == "10"
     assert not result["data_schema"].schema
+
+
+async def test_save_timezone_options_on_loaded_entry(
+    hass, entry, reservation_data, freezer
+):
+    freezer.move_to("2026-11-05T22:00:00Z")
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.hospitable_stays.api.HospitableApi.reservations",
+        return_value=[reservation_data],
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        flow = await hass.config_entries.options.async_init(entry.entry_id)
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": "timezones"}
+        )
+        result = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"timezone": "Europe/London"}
+        )
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        await hass.async_block_till_done()
+        assert (
+            entry.runtime_data.coordinator.properties["fake-property"].timezone
+            == "Europe/London"
+        )
+        assert (
+            hass.states.get("sensor.example_cottage_reservation_status").attributes[
+                "timezone"
+            ]
+            == "Europe/London"
+        )
+        flow = await hass.config_entries.options.async_init(entry.entry_id)
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": "settings"}
+        )
+        result = await hass.config_entries.options.async_configure(
+            flow["flow_id"],
+            {"poll_minutes": 15, "arrival_hours": 12, "guest_details": False},
+        )
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        await hass.async_block_till_done()
+        assert entry.runtime_data.coordinator.arrival_hours == 12
+        assert (
+            entry.runtime_data.coordinator.properties["fake-property"].timezone
+            == "Europe/London"
+        )
+        assert await hass.config_entries.async_unload(entry.entry_id)
