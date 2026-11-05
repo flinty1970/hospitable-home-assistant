@@ -28,3 +28,15 @@ Repairs translation schema conflict and missing repository topics; both were
 corrected. Added an admin-only sidebar panel with Copy URL and local self-test
 buttons, plus authorization and Cloud gating tests. Final workflow results and
 live installation status are recorded after publication.
+
+## Published release and HACS installation
+
+- Release: [v0.1.0](https://github.com/flinty1970/hospitable-home-assistant/releases/tag/v0.1.0).
+- [Workflow 42060472602](https://github.com/flinty1970/hospitable-home-assistant/actions/runs/42060472602): **tests, hassfest and HACS all passed** for release code `1feabec`.
+- US HA's HACS registered the custom repository and successfully installed
+  **v0.1.0**, with installed and available versions matching.
+- Home Assistant restart scheduled through its supported restart tool.
+- Live account field comparison remains pending host setup: enter the PAT directly
+  in HA, select properties, confirm IANA timezones, then compare entity attributes
+  and calendar events with Hospitable. No PAT was requested through chat.
+- No climate, light, switch or lock automation was installed or run by this test.
