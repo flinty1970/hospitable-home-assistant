@@ -1,5 +1,6 @@
 """Load optional Cloud helpers only when Home Assistant Cloud is configured."""
 
+from hass_nabucasa import NabuCasaBaseError
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
@@ -26,10 +27,16 @@ async def get_hook(hass: HomeAssistant, hook_id: str) -> str:
         raise HomeAssistantError("Home Assistant Cloud is unavailable")
     from homeassistant.components import cloud
 
-    return await cloud.async_get_or_create_cloudhook(hass, hook_id)
+    try:
+        return await cloud.async_get_or_create_cloudhook(hass, hook_id)
+    except NabuCasaBaseError:
+        raise HomeAssistantError("Could not create the Cloud hook") from None
 
 
 async def delete_hook(hass: HomeAssistant, hook_id: str) -> None:
     from homeassistant.components import cloud
 
-    await cloud.async_delete_cloudhook(hass, hook_id)
+    try:
+        await cloud.async_delete_cloudhook(hass, hook_id)
+    except NabuCasaBaseError:
+        raise HomeAssistantError("Could not delete the Cloud hook") from None

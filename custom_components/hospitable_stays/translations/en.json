@@ -82,7 +82,7 @@
       },
       "webhook_status": {
         "title": "Webhook status",
-        "description": "Last webhook received (UTC): {received}\nEvent: {event}\nPolling fallback: {fallback}\nLast successful poll (UTC): {poll}\n\n1. Copy the URL below.\n2. In Hospitable open Apps \u2192 Webhooks under Tools \u2192 Webhooks tab \u2192 + Add new.\n3. Give it a name, paste the URL, select Reservations, and Save.\n4. Click Test in Hospitable, then reopen this status screen.\n\nAnyone with the URL can post to it, which is why signature verification matters. Keep the URL private. Only Home Assistant Cloud delivery is accepted.",
+        "description": "Last webhook received (UTC): {received}\nEvent: {event}\nPolling fallback: {fallback}\nLast successful poll (UTC): {poll}\n\n1. Copy the URL below.\n2. In Hospitable open Apps \u2192 Webhooks under Tools \u2192 Webhooks tab \u2192 + Add new.\n3. Give it a name, paste the URL, select Reservations, and Save.\n4. Click Test in Hospitable, then reopen this status screen.\n\nAnyone with the URL can post to it, which is why signature verification matters. Keep the URL private. Only Home Assistant Cloud delivery is accepted.\n\nFor a Copy URL button, open Hospitable Stays in the sidebar.",
         "data": {
           "cloudhook_url": "Private Nabu Casa webhook URL"
         }
@@ -136,7 +136,6 @@
   "issues": {
     "invalid_auth": {
       "title": "Hospitable token needs renewal",
-      "description": "The token is invalid, expired, or missing Read permission. Continue to start reauthentication.",
       "fix_flow": {
         "step": {
           "confirm": {

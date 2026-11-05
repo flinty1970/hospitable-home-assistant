@@ -96,8 +96,8 @@ With an active connected subscription:
 1. Select **Enable push updates**, enter the **primary Hospitable account email**,
    and submit to create a Cloud hook. Use its exact spelling/case in Hospitable.
 2. Open **Webhook status and URL**, and copy the private `https://hooks.nabu.casa/…`
-   URL from the read-only field. Use the browser's normal text-copy action if a
-   native copy control is unavailable in your HA frontend.
+   URL from the read-only field, or open **Hospitable Stays** in the sidebar and
+   click **Copy URL**. The sidebar status panel is restricted to administrators.
 3. In Hospitable: **Apps → Webhooks (under Tools) → Webhooks tab → + Add new**.
 4. Give it a name, paste the URL, select **Reservations**, then **Save**.
 5. Click **Test** in Hospitable; reopen HA's status screen to check receipt.

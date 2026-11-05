@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from .api import HospitableApi
 from .coordinator import HospitableCoordinator
+from .panel import async_setup_panel
 from .webhook import WebhookManager
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.CALENDAR]
@@ -42,6 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HospitableEntry) -> bool
     await manager.async_setup()
     entry.runtime_data = RuntimeData(coordinator, manager)
     entry.async_on_unload(manager.unload)
+    await async_setup_panel(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(
         async_track_time_interval(hass, coordinator.tick, timedelta(seconds=30))

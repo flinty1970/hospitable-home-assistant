@@ -87,7 +87,9 @@ Use ConfigEntry runtime_data, async platform forwarding, coordinator availabilit
 reauth via ConfigEntryAuthFailed, issue registry and reauth repairs. Cloud is an
 after_dependency so polling remains available without Cloud setup; http/webhook
 are dependencies. Standard options forms cannot supply an arbitrary clipboard
-button: show the URL through HA's read-only text selector (native copy control).
+button: show the URL in a read-only selector and provide a local admin-only custom
+sidebar panel with a Copy URL button. Status WebSocket handlers require admin
+authorization independently of panel visibility.
 
 API property timezone examples are fixed offsets, not guaranteed IANA names.
 Require host confirmation of an IANA timezone per property. For Booking.com

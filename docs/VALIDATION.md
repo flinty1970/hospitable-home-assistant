@@ -3,7 +3,7 @@
 Local runtime: Home Assistant 2026.10.4, Python 3.14.7, matching US Home Assistant
 2026.10.4. Source is Python 3.12-compatible; HA itself requires its bundled Python.
 
-- 53 pytest tests pass with external sockets disabled and mocked Hospitable HTTP.
+- 55 pytest tests pass with external sockets disabled and mocked Hospitable HTTP.
 - Real HA config/options/reauth flows and full platform setup/unload exercised.
 - One property device and five entity states checked under an accepted synthetic stay.
 - Cancellation/pending/owner stays, same-day turnover, back-to-back boundaries,
@@ -22,3 +22,9 @@ Live comparison must use the selected property's real timezone and confirm upcom
 and current stay data, counts, platform, codes and the calendar. Guest contacts stay
 disabled unless explicitly requested. No heating or turn-off automation is installed
 as part of data validation.
+
+The first GitHub test job passed. Initial hassfest/HACS failures identified a
+Repairs translation schema conflict and missing repository topics; both were
+corrected. Added an admin-only sidebar panel with Copy URL and local self-test
+buttons, plus authorization and Cloud gating tests. Final workflow results and
+live installation status are recorded after publication.

@@ -1,10 +1,21 @@
 {
   "domain": "hospitable_stays",
   "name": "Hospitable Stays",
-  "after_dependencies": ["cloud"],
-  "codeowners": ["@flinty1970"],
+  "after_dependencies": [
+    "cloud",
+    "frontend",
+    "panel_custom"
+  ],
+  "codeowners": [
+    "@flinty1970"
+  ],
   "config_flow": true,
-  "dependencies": ["http", "repairs", "webhook"],
+  "dependencies": [
+    "http",
+    "repairs",
+    "webhook",
+    "websocket_api"
+  ],
   "documentation": "https://github.com/flinty1970/hospitable-home-assistant",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
