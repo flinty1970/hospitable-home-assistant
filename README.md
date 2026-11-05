@@ -49,6 +49,7 @@ not assume that Rental Control lacks reservation details or timezone support.
 ## Install through HACS
 
 Requires Home Assistant **2026.10.0+**, HACS and a Hospitable account with API access.
+Tested on Home Assistant **2026.10.4**; the exact minimum version has not been runtime-tested.
 The integration source uses Python 3.12-compatible syntax; current HA runs Python 3.14.
 
 1. HACS → menu → Custom repositories.
@@ -163,7 +164,7 @@ With an active connected subscription:
 5. Click **Test** in Hospitable; reopen HA's status screen to check receipt.
 
 Hospitable signs the **exact raw body** with HMAC-SHA256 in the `Signature` header.
-For hosts its secret is the primary user's email encoded in base64. This key is
+[Hospitable's webhook documentation](https://developer.hospitable.com/docs/public-api-docs/webhooks-docs#signature) confirms that for hosts, its secret is the primary user's email encoded in base64. This key is
 email-derived, not random; base64 is not encryption. Anyone with the URL can post
 to it, which is why signature verification matters. Protect both the URL and email.
 No full webhook URL, body, token or signing key is logged by this integration.

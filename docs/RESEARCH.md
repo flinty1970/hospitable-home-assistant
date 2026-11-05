@@ -99,3 +99,7 @@ UTC Z timestamps represent instants and are converted normally. No broad offset
 rewrite for other platforms. Reject nonexistent local times; choose the matching
 fold when an offset disambiguates DST, otherwise fold=0. This is a defensive
 heuristic, not a vendor guarantee; check affected stays before enabling heating.
+
+Signing documentation rechecked on 5 November 2026 using the rendered official
+Webhooks → Signature section. It explicitly distinguishes host email-derived
+secrets from vendor secrets managed in the Partner Portal and specifies HMAC-SHA256.
