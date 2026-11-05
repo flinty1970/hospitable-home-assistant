@@ -1,8 +1,14 @@
+Unofficial community integration for Hospitable. Not affiliated with or endorsed by Hospitable.
+
 # Hospitable Stays for Home Assistant
 
 Read-only reservation sensors and calendars for occupancy-based heating, lighting,
 cleaning reminders and other Home Assistant automations. Works with any supported
 `climate` entity; no thermostat brand dependency.
+
+This integration works only with Hospitable accounts that have API access.
+
+Early release (0.1.x): [feedback and bug reports welcome](https://github.com/flinty1970/hospitable-home-assistant/issues).
 
 **Push updates require Home Assistant Cloud. Without it, the integration polls.**
 
@@ -22,8 +28,7 @@ The integration source uses Python 3.12-compatible syntax; current HA runs Pytho
    **IANA timezone** from the searchable menu (for example `America/New_York`). This is the property's
    timezone, which can differ from Home Assistant's or your browser's.
 
-The repository must be published before HACS can download it. It is a custom
-repository; inclusion in the HACS default catalogue is a separate process.
+This is a custom repository; inclusion in the HACS default catalogue is a separate process.
 
 ## Create a Personal Access Token
 
