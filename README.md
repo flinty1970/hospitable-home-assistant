@@ -52,14 +52,16 @@ Requires Home Assistant **2026.10.0+**, HACS and a Hospitable account with API a
 The integration source uses Python 3.12-compatible syntax; current HA runs Python 3.14.
 
 1. HACS → menu → Custom repositories.
-2. Add `https://github.com/flinty1970/hospitable-home-assistant`, category **Integration**.
-3. Find **Hospitable Stays**, download the release, and restart Home Assistant.
+2. Add `https://github.com/flinty1970/hospitable-home-assistant`, select type **Integration**, and click **Add**.
+3. Open **Hospitable Stays** and select **Download**. HACS selects the newest release by default; use its version selector if you need a specific release. Restart Home Assistant when HACS reports a pending restart.
 4. Settings → Devices & services → Add integration → **Hospitable Stays**.
 5. Enter a read-only PAT, select one or more properties and choose each property's
    **IANA timezone** from the searchable menu (for example `America/New_York`). This is the property's
    timezone, which can differ from Home Assistant's or your browser's.
 
 This is a custom repository; inclusion in the HACS default catalogue is a separate process.
+
+These steps follow HACS's [custom repository guide](https://www.hacs.xyz/docs/faq/custom_repositories/) and [download guide](https://www.hacs.xyz/docs/use/repositories/dashboard/). HACS downloads the integration into `custom_components/hospitable_stays/`; configuring it is a separate step in Devices & services.
 
 ## Create a Personal Access Token
 
