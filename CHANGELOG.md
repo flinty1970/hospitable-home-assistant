@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- Clarify unofficial status, API access requirements and early-release feedback.
+- Add a sourced Rental Control comparison and verified HACS installation steps.
+- Record release metadata, repository hygiene review and current validation results.
+
 ## 0.1.2
 
 - Fix saving options on loaded entries by using only OptionsFlowWithReload.

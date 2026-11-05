@@ -1,42 +1,42 @@
 # Validation
 
-Local runtime: Home Assistant 2026.10.4, Python 3.14.7, matching US Home Assistant
-2026.10.4. Source is Python 3.12-compatible; HA itself requires its bundled Python.
+Documentation review: 5 November 2026. Local runtime: Home Assistant 2026.10.4,
+Python 3.14.7. The declared minimum is HA 2026.10.0; this review did not run that
+exact version. See [release and installation checks](RELEASE_CHECK.md).
 
-- 55 pytest tests pass with external sockets disabled and mocked Hospitable HTTP.
-- Real HA config/options/reauth flows and full platform setup/unload exercised.
-- One property device and five entity states checked under an accepted synthetic stay.
-- Cancellation/pending/owner stays, same-day turnover, back-to-back boundaries,
-  privacy projection, timezone offsets, DST folds/gaps, pagination, 429/5xx backoff,
-  credential boundaries, signed cloud dispatch, invalid signatures, replay age,
-  duplicate delivery persistence, malformed payloads, local self-test and fallback.
-- Blueprint expansion and both automation examples validate against HA schemas.
-- Ruff lint/format and mypy checks pass for the integration source.
+## Existing checks
 
-The restricted execution sandbox blocks asyncio self-pipe traffic; tests therefore
-ran outside that sandbox while pytest still disabled external network sockets.
+- All 59 pytest tests pass with external sockets disabled and mocked Hospitable HTTP.
+- Real HA config/options/reauth flows and full platform setup/unload are exercised.
+- Synthetic fixtures cover entity projection, cancellation, pending/owner stays,
+  same-day turnover, back-to-back boundaries, privacy, timezone offsets, DST,
+  pagination, backoff, credential boundaries and signed cloud dispatch.
+- Webhook coverage includes invalid signatures, replay age, persistent
+  deduplication, malformed payloads, local self-test and fallback.
+- Blueprint expansion and automation examples validate against HA schemas.
+- Ruff lint passes; format checking reports 28 files already formatted.
+- Mypy passes for all 15 integration source files.
 
-GitHub hassfest/HACS validation and live US HACS installation are checked separately
-below. Mocked tests do not establish real account field availability or cloud routing.
-Live comparison must use the selected property's real timezone and confirm upcoming
-and current stay data, counts, platform, codes and the calendar. Guest contacts stay
-disabled unless explicitly requested. No heating or turn-off automation is installed
-as part of data validation.
+The restricted execution sandbox blocks asyncio self-pipe traffic; pytest ran
+outside that sandbox while its fixtures still disabled external network sockets.
 
-The first GitHub test job passed. Initial hassfest/HACS failures identified a
-Repairs translation schema conflict and missing repository topics; both were
-corrected. Added an admin-only sidebar panel with Copy URL and local self-test
-buttons, plus authorization and Cloud gating tests. Final workflow results and
-live installation status are recorded after publication.
+## Published release and workflow checks
 
-## Published release and HACS installation
+The existing [v0.1.2 release](https://github.com/flinty1970/hospitable-home-assistant/releases/tag/v0.1.2)
+points to tag commit `af3a77b8cc7e094d76bf05d2e2f6e03a143b65a8`.
+[Workflow 42065395095](https://github.com/flinty1970/hospitable-home-assistant/actions/runs/42065395095)
+passed tests, hassfest and HACS for that release code. The final documentation
+commit also triggers these checks; its result is reported with the review handoff.
 
-- Release: [v0.1.0](https://github.com/flinty1970/hospitable-home-assistant/releases/tag/v0.1.0).
-- [Workflow 42060472602](https://github.com/flinty1970/hospitable-home-assistant/actions/runs/42060472602): **tests, hassfest and HACS all passed** for release code `1feabec`.
-- US HA's HACS registered the custom repository and successfully installed
-  **v0.1.0**, with installed and available versions matching.
-- Home Assistant restart scheduled through its supported restart tool.
-- Live account field comparison remains pending host setup: enter the PAT directly
-  in HA, select properties, confirm IANA timezones, then compare entity attributes
-  and calendar events with Hospitable. No PAT was requested through chat.
-- No climate, light, switch or lock automation was installed or run by this test.
+## Documentation and scope
+
+Every README link was checked: four relative file targets exist, seven unique
+web targets return HTTP 200, and the Rental Control features anchor exists.
+The illustrative Nabu Casa URL placeholder is not a live link and was excluded.
+The comparison uses Rental Control's own current README; no live interoperability
+test was performed.
+
+This review changes documentation only. Integration source, entities, options,
+API calls, blueprint, manifests and version remain unchanged. No live account
+field comparison, installation, restart or cloud-routing test was repeated.
+Mocked tests do not establish real account field availability or cloud routing.
