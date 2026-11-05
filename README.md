@@ -87,6 +87,28 @@ with credentials, hook identifiers, property identities and reservation/guest da
 redacted by omission. Credentials live in HA's private config-entry storage, which
 is **not encrypted at rest**; protect your HA storage and backups.
 
+## What do the options mean?
+
+Open Settings → Devices & services → Hospitable Stays → Configure.
+
+| Option | What it does | Starting setting |
+|---|---|---|
+| **Polling interval (minutes)** | How often HA asks Hospitable for reservation changes. A value of 10 means a new, changed or cancelled booking may take up to about 10 minutes to appear under normal conditions. Polling continues when push is enabled. API backoff/outages can extend this. Allowed range: 1–1440 minutes. | **10 minutes** |
+| **Arrival threshold (hours)** | How far before the next check-in the Arrival within threshold binary sensor turns on and `hospitable_guest_arriving_soon` is fired. At 24 hours, a 16:00 check-in enters the window at 16:00 the previous day. It does not switch heating on by itself. Allowed range: 1–168 hours. | **24 hours** |
+| **Expose guest names and contact details** | Adds available guest names, email and phone numbers to reservation-sensor attributes. Platforms may omit/mask them. They may then enter HA history, backups and dashboards. Turning this off stops future exposure but does not delete existing history. Occupancy and heating work without it. | **Off** |
+| **Property timezones** | Searchable region/city menu for each property's own timezone. It controls booking calculations and offset correction, independently of the HA server's timezone. Numeric API offsets do not preselect HA's timezone. | For a UK property: **Europe/London (United Kingdom)** |
+| **Webhooks → Enable push updates** | Optional faster updates for booking changes, delivered through Home Assistant Cloud. Requires an active Nabu Casa subscription and manual registration of the generated URL in Hospitable. Polling remains the fallback. | Optional; polling works on its own |
+| **Primary Hospitable account email** | The account owner's email, used to verify Hospitable webhook signatures. It is not a guest email, notification recipient or HA login field. Hospitable derives host signing keys from this address; the integration stores the derived signing key. Enter it only when enabling push. | Exact primary Hospitable account email |
+| **Webhook status and URL** | Shows the private URL, last received event, last successful poll and fallback status. The admin sidebar panel also has a Copy URL button. | Inspect after setup |
+| **Send test event** | Sends a signed synthetic sample through the local receiver. It tests processing, not whether Hospitable can reach the Cloud URL. Use Hospitable's Test button for that. | Run when troubleshooting |
+| **Disable push updates** | Deletes the Nabu Casa hook and leaves polling running. Also remove the corresponding webhook in Hospitable. | Use to return to polling only |
+
+**The arrival threshold and heating blueprint's preheat hours are separate.** You
+can receive an arrival reminder 24 hours ahead while starting heating only 4 hours
+ahead. Both use the scheduled check-in time, not a detected physical arrival.
+Changing options saves them and reloads this integration automatically; it does
+not require a full Home Assistant restart.
+
 ## Optional Nabu Casa push updates
 
 Settings → Devices & services → Hospitable Stays → Configure → **Webhooks**.
@@ -149,19 +171,133 @@ fold. Nonexistent local times fail the refresh rather than silently moving a sta
 This is a defensive heuristic, not proof the upstream offset was wrong. Tests cover
 summer/winter offsets, folds, DST gaps, back-to-back and same-day turnover.
 
-## Automations
+## Example automations
 
-Import the [Occupancy-based heating blueprint](blueprints/automation/occupancy_heating.yaml).
-Choose the property's Occupied and Next reservation entities and any climate entity.
-Set comfort/empty temperatures in **the climate entity's temperature unit**, and
-choose how many hours before arrival to preheat. Keep the thermostat in a mode
-that accepts a single target temperature. The blueprint does not change HVAC mode.
-Unknown/unavailable inputs preserve the existing setpoint; built-in frost protection
-and the thermostat's own limits remain your responsibility.
+These examples are documentation; installing the integration does not create or
+enable them. Start with notifications so you can observe the timing before adding
+controls. Booked occupancy is not physical presence: a guest may leave late.
 
-[Two short examples](examples/automations.yaml): pre-arrival notification and a
-post-checkout routine to turn off selected lights/switches. Replace example entity
-IDs and the fake property ID before creating them in HA's automation UI.
+For the YAML examples below, open Settings → Automations & scenes → Create
+automation → Create new automation, then its menu → **Edit in YAML**. Paste one
+complete example at a time. Replace every `example_*` entity with your own.
+Copy the property's UUID from the `property_id` attribute on its Reservation status
+sensor (Tools → States, or the entity's state attributes) and replace
+`fake-property-replace-me`. The UUID is different from the property's name.
+
+### 1. Pre-arrival reminder
+
+Creates a notification inside HA when the next stay enters the arrival threshold.
+It does not send a phone notification or guest message. To notify a phone instead,
+replace the notification action with your own configured mobile-app notify action.
+
+```yaml
+alias: Hospitable pre-arrival reminder
+triggers:
+  - trigger: event
+    event_type: hospitable_guest_arriving_soon
+    event_data:
+      property_id: "fake-property-replace-me"
+actions:
+  - action: persistent_notification.create
+    data:
+      title: Guest arrival approaching
+      message: >-
+        {{ trigger.event.data.property }}: reservation
+        {{ trigger.event.data.reservation_code }} is arriving soon.
+mode: single
+```
+
+The integration's **Arrival threshold** sets this reminder's lead time. An upcoming
+arrival can be announced again after an integration reload; add persistent
+last-notified-code tracking if your notification workflow needs exactly-once delivery.
+
+### 2. Post-checkout lights and appliances off
+
+Runs after the scheduled checkout. The occupancy condition prevents the routine
+from switching things off when another booked stay has already begun. Choose only
+devices that are appropriate to switch off automatically; keep essentials such as
+refrigeration and network equipment out of the target list.
+
+```yaml
+alias: Hospitable post-checkout turn things off
+triggers:
+  - trigger: event
+    event_type: hospitable_guest_checked_out
+    event_data:
+      property_id: "fake-property-replace-me"
+conditions:
+  - condition: state
+    entity_id: binary_sensor.example_cottage_occupied
+    state: "off"
+actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.example_guest_lights
+  - action: switch.turn_off
+    target:
+      entity_id: switch.example_guest_appliances
+mode: single
+```
+
+A cancellation is not treated as checkout. Startup also does not replay checkout
+events missed while HA was stopped. The entity condition uses the same property's
+Occupied entity as the event's property UUID.
+
+### 3. Cleaning reminder after checkout
+
+Creates a reminder in HA, including on a same-day turnover. This is a reminder to
+you; it does not contact a cleaner or change a Hospitable task.
+
+```yaml
+alias: Hospitable cleaning reminder
+triggers:
+  - trigger: event
+    event_type: hospitable_guest_checked_out
+    event_data:
+      property_id: "fake-property-replace-me"
+actions:
+  - action: persistent_notification.create
+    data:
+      title: Cleaning due
+      message: >-
+        Scheduled checkout has passed at {{ trigger.event.data.property }}
+        for reservation {{ trigger.event.data.reservation_code }}.
+        Check departure and the next arrival before arranging access.
+mode: single
+```
+
+### 4. Occupancy-based heating with preheating
+
+Use the included [Occupancy-based heating blueprint](blueprints/automation/occupancy_heating.yaml).
+
+1. Settings → Automations & scenes → Blueprints → Import blueprint.
+2. Paste `https://github.com/flinty1970/hospitable-home-assistant/blob/main/blueprints/automation/occupancy_heating.yaml`.
+3. Create an automation from it.
+4. Choose the **Occupied** and **Next reservation** entities from the same property,
+   then choose the climate entity you want to control.
+5. Choose comfort and empty-property temperatures in **that climate entity's unit**.
+   For example, on a Celsius thermostat you might choose 21°C and 16°C; choose
+   suitable Fahrenheit values if the entity uses °F.
+6. Set **Hours before arrival to return to comfort**, for example 4 hours.
+
+The behavior is:
+
+| Booking state | Target temperature |
+|---|---|
+| Accepted guest stay currently in progress | Comfort |
+| Empty, with next arrival inside the blueprint's preheat window | Comfort |
+| Empty, with no arrival inside that window | Empty-property setpoint |
+| Booking inputs unknown/unavailable | Preserve the existing setpoint |
+
+The blueprint works with a chosen climate entity rather than a thermostat brand.
+Keep the thermostat in a mode that accepts a single target temperature: the
+blueprint does not change HVAC mode. It reevaluates on booking/occupancy changes,
+at HA startup and every five minutes. It will reapply its chosen setpoint on that
+schedule while enabled; disable the automation when you want manual control.
+Keep the thermostat's own frost protection and temperature limits enabled.
+
+The [standalone example file](examples/automations.yaml) contains the first two
+patterns as well. Guest names and contact details can stay **off** for all examples.
 
 ## Troubleshooting
 
