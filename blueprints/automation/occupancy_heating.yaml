@@ -1,0 +1,112 @@
+blueprint:
+  name: Occupancy-based heating (Hospitable Stays)
+  description: >-
+    Use a comfort setpoint during accepted guest stays and N hours before the next
+    arrival, otherwise use an empty-property setpoint. Temperatures use the climate
+    entity's own unit. Select the Occupied and Next reservation entities from the
+    same property. Keeps the existing setpoint if booking data is unavailable.
+    The thermostat must already be in a mode accepting a single target temperature.
+    This automation does not change HVAC mode.
+  domain: automation
+  author: flinty1970
+  source_url: https://github.com/flinty1970/hospitable-home-assistant/blob/main/blueprints/automation/occupancy_heating.yaml
+  homeassistant:
+    min_version: "2026.10.0"
+  input:
+    occupied:
+      name: Property occupied sensor
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              integration: hospitable_stays
+              device_class: occupancy
+    next_reservation:
+      name: Property next reservation sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: hospitable_stays
+    thermostat:
+      name: Climate entity
+      selector:
+        entity:
+          filter:
+            - domain: climate
+    comfort_temperature:
+      name: Comfort temperature (climate entity's unit)
+      default: 21
+      selector:
+        number:
+          min: 5
+          max: 95
+          step: 0.5
+          mode: box
+    empty_temperature:
+      name: Empty temperature (climate entity's unit)
+      default: 16
+      selector:
+        number:
+          min: 5
+          max: 95
+          step: 0.5
+          mode: box
+    preheat_hours:
+      name: Hours before arrival to return to comfort
+      default: 4
+      selector:
+        number:
+          min: 0
+          max: 168
+          step: 0.5
+          mode: box
+triggers:
+  - trigger: occupancy.detected
+    target:
+      entity_id: !input occupied
+  - trigger: occupancy.cleared
+    target:
+      entity_id: !input occupied
+  - trigger: state
+    entity_id: !input next_reservation
+    to: null
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: "/5"
+conditions:
+  - condition: state
+    entity_id: !input occupied
+    state: ["on", "off"]
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input next_reservation
+        state: ["unknown", "unavailable"]
+actions:
+  - choose:
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input occupied
+                state: "on"
+              - condition: numeric_state
+                entity_id: !input next_reservation
+                attribute: hours_until_check_in
+                above: 0
+                below: !input preheat_hours
+        sequence:
+          - action: climate.set_temperature
+            target:
+              entity_id: !input thermostat
+            data:
+              temperature: !input comfort_temperature
+    default:
+      - action: climate.set_temperature
+        target:
+          entity_id: !input thermostat
+        data:
+          temperature: !input empty_temperature
+mode: restart

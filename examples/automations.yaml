@@ -1,0 +1,36 @@
+# Example config for the HA automation UI. Replace all example entity/property IDs.
+# Do not install these unchanged on a live property.
+- alias: Hospitable pre-arrival notification
+  triggers:
+    - trigger: event
+      event_type: hospitable_guest_arriving_soon
+      event_data:
+        property_id: "fake-property-replace-me"
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: Guest arrival approaching
+        message: >-
+          {{ trigger.event.data.property }}: reservation
+          {{ trigger.event.data.reservation_code }} is arriving soon.
+  mode: single
+
+- alias: Hospitable post-checkout turn things off
+  triggers:
+    - trigger: event
+      event_type: hospitable_guest_checked_out
+      event_data:
+        property_id: "fake-property-replace-me"
+  conditions:
+    # Avoid switching things off during a back-to-back stay.
+    - condition: state
+      entity_id: binary_sensor.example_cottage_occupied
+      state: "off"
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id: light.example_guest_lights
+    - action: switch.turn_off
+      target:
+        entity_id: switch.example_guest_appliances
+  mode: single
