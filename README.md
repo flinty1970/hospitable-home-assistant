@@ -15,6 +15,37 @@ Early release (0.1.x): [feedback and bug reports welcome](https://github.com/fli
 Domain: `hospitable_stays`, to avoid the existing third-party `hospitable` domain.
 This is an independent community integration, not an official Hospitable product.
 
+## Which integration should I use?
+
+**Hospitable Stays** is built on the Hospitable Public API and works only for
+Hospitable hosts with API access. A read-only token connects the account. It
+provides reservation status, booking platform, guest count and property-timezone
+handling, with optional push updates through Home Assistant Cloud. It is read-only
+and does not manage door codes.
+
+[Rental Control](https://github.com/tykeal/homeassistant-rental-control) reads iCal
+(ICS) calendar feeds over HTTPS. It can work with any provider offering a compatible
+feed, including Airbnb, VRBO, Booking.com and Guesty. It polls the calendar and can
+manage lock slots through Keymaster. Its documentation also describes using
+its generated codes in custom lock automations without Keymaster.
+
+| | Hospitable Stays | Rental Control |
+|---|---|---|
+| Data source | Hospitable Public API v2 | HTTPS iCal/ICS calendar feed |
+| Supported platforms | Reservations available through a Hospitable account with API access | Providers that supply a compatible HTTPS calendar feed |
+| Update method | Configurable polling (default 10 minutes), plus optional Nabu Casa webhooks; polling continues | Configurable calendar polling (documented default 2 minutes) |
+| Door code management | None; does not request or expose lock codes | Optional Keymaster lock-slot management; generated codes are also available to custom automations |
+| Setup | Read-only Hospitable PAT, property selection and property timezone; optional Cloud hook setup | Calendar name and ICS URL in HA's setup flow; optional Keymaster configuration |
+
+Rental Control is the appropriate choice if you do not use Hospitable, or want
+Home Assistant to manage door codes. Choose Hospitable Stays if you want a
+Hospitable API connection for reservation-driven automations. The two can be
+installed side by side for different roles. This comparison is based on this
+project's [API review](docs/RESEARCH.md) and
+[Rental Control's own documentation](https://github.com/tykeal/homeassistant-rental-control#features).
+Calendar-feed fields depend on what each provider includes; this comparison does
+not assume that Rental Control lacks reservation details or timezone support.
+
 ## Install through HACS
 
 Requires Home Assistant **2026.10.0+**, HACS and a Hospitable account with API access.
